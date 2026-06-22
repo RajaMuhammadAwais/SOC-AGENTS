@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: soc-config
+  namespace: enterprise-ai-soc
+data:
+  APP_ENV: production
+  APP_NAME: Enterprise AI SOC
+  API_HOST: 0.0.0.0
+  API_PORT: "8000"
+  JWT_ISSUER: enterprise-ai-soc
+  JWT_AUDIENCE: enterprise-ai-soc-api
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_REQUESTS: "120"
+  RATE_LIMIT_WINDOW_SECONDS: "60"

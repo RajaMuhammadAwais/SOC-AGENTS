@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soc-backend
+  namespace: enterprise-ai-soc
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: soc-backend
+  template:
+    metadata:
+      labels:
+        app: soc-backend
+    spec:
+      containers:
+        - name: backend
+          image: enterprise-ai-soc-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: soc-config
+            - secretRef:
+                name: soc-secrets
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health/ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health/live
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soc-backend
+  namespace: enterprise-ai-soc
+spec:
+  selector:
+    app: soc-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
