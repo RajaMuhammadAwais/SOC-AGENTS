@@ -1,13 +1,18 @@
-import { Activity, FileText, LayoutDashboard, Radar, Settings, ShieldAlert } from "lucide-react";
+import { Activity, Database, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { ForwardRefExoticComponent, ReactNode } from "react";
+import type { LucideProps } from "lucide-react";
 
-const navItems = [
+// Navigation is deliberately limited to the routes the console ships today;
+// additional console pages (alerts, investigations, reports, settings) are
+// on the roadmap and will be added alongside this list.
+const navItems: Array<{
+  href: "/" | "/data-sources";
+  label: string;
+  icon: ForwardRefExoticComponent<Omit<LucideProps, "ref">>;
+}> = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/alerts", label: "Alerts", icon: ShieldAlert },
-  { href: "/investigations", label: "Investigations", icon: Radar },
-  { href: "/reports", label: "Reports", icon: FileText },
-  { href: "/settings", label: "Settings", icon: Settings }
+  { href: "/data-sources", label: "Data Sources", icon: Database }
 ];
 
 const navLinkClassName =

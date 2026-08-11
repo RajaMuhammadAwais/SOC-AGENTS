@@ -36,7 +36,8 @@ import {
   createDataSource,
   deleteDataSource,
   listDataSources,
-  uploadToDataSource
+  uploadToDataSource,
+  type UploadResult
 } from "@/lib/api/client";
 
 const SOURCE_TYPES = ["api_json", "cef", "syslog", "csv"] as const;
@@ -271,7 +272,7 @@ function UploadDialog({
 
   const uploadMutation = useMutation({
     mutationFn: () => uploadToDataSource(sourceId, rawText),
-    onSuccess: (response) => {
+    onSuccess: (response: UploadResult) => {
       setResult(
         response.normalized
           ? `Ingested. Trace ${response.trace_id} — normalized and risk-scored (${response.observables} observables).`
@@ -283,7 +284,7 @@ function UploadDialog({
   });
 
   return (
-    <Dialog open onOpenChange={(open) => (open ? null : onClose())}>
+    <Dialog open onOpenChange={(open: boolean) => (open ? null : onClose())}>
       <DialogContent className="bg-slate-900 text-slate-100">
         <DialogHeader>
           <DialogTitle>Upload raw events</DialogTitle>
@@ -294,7 +295,7 @@ function UploadDialog({
         </DialogHeader>
         <Textarea
           value={rawText}
-          onChange={(event) => setRawText(event.target.value)}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setRawText(event.target.value)}
           placeholder={`CEF example: Jan 12 09:00:00 fw01 CEF:0|Vendor|Product|1.0|SIG-100|Suspicious login|7|src=10.0.0.5 dst=192.168.1.10 suser=svc_backup`}
           rows={8}
           className="font-mono text-xs"

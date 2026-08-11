@@ -1,3 +1,46 @@
+# CI Fix + License TODO (Aug 12)
+
+- [ ] Refresh stale frontend/package-lock.json (npm ci was failing)
+- [ ] Fix frontend CI job (setup-node lockfile path + per-step working-directory)
+- [ ] Verify frontend typecheck + build locally
+- [ ] Add Apache-2.0 LICENSE and license notice files to the repo
+- [ ] Commit + push fixes and license to GitHub (workflow file may need patch workaround)
+- [ ] Deliver summary of fixes and license to user
+
+---
+
+# Open-Source Preparation TODO
+
+## Phase 1: Secrets sweep
+- [ ] Scan repo for hardcoded passwords, tokens, keys, connection strings
+- [ ] Check .env.example for real secrets (only placeholders allowed)
+- [ ] Verify config defaults contain no real credentials
+- [ ] Check docs, markdown, and scripts for leaked secrets
+- [ ] Add secrets policy to documentation
+
+## Phase 2: Scope documentation
+- [ ] Rewrite README.md as complete end-to-end project scope
+- [ ] Write docs/SCOPE.md (functional + non-functional scope, boundaries, roadmap)
+- [ ] Write docs/ARCHITECTURE.md (system architecture, pipeline, autonomy layer)
+- [ ] Write docs/AUTONOMOUS_AGENTS.md (skills, memory, knowledge, policy engine)
+- [ ] Update docs/DEPLOYMENT.md with Docker/CI usage
+
+## Phase 3: Docker/CI finalization
+- [ ] Verify backend ruff lint + mypy pass
+- [ ] Verify full test suite passes
+- [ ] Verify backend boots in Docker build (dry-run locally)
+
+## Phase 4: Git push
+- [ ] Commit all changes with clean history
+- [ ] Push to RajaMuhammadAwais/SOC-AGENTS main
+
+## Phase 5: Delivery
+- [ ] Send final report + documentation summary to user
+
+---
+
+# Legacy: Enterprise AI SOC Platform - Project Todo
+
 You are a Principal AI Architect, Principal Cyber Security Engineer, Senior Software Engineer, DevSecOps Architect, and Enterprise Solution Architect.
 
 Your objective is to design and build a production-ready Enterprise Autonomous AI Security Operations Center (AI SOC) platform that combines SIEM, SOAR, Threat Intelligence, RAG, and Multi-Agent AI into a single scalable system.

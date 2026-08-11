@@ -170,7 +170,7 @@ CI runs lint (ruff), type-check (mypy), the unit suite, frontend typecheck/build
 
 ## License
 
-Apache-2.0. Contributions welcome — see [SECURITY.md](SECURITY.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
+This project is licensed under the **Apache License 2.0** — see [`LICENSE`](LICENSE) for the full text and [`LICENSE.md`](LICENSE.md) for a short summary, including how third-party components are licensed. Contributions are welcome; see [SECURITY.md](SECURITY.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Documentation index
 
