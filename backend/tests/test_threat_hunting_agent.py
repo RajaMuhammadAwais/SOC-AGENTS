@@ -78,6 +78,7 @@ def test_summarize_hunt_results_extracts_entities_and_gaps() -> None:
 def test_choose_next_action_collects_missing_telemetry_first() -> None:
     result = choose_hunt_next_action(
         {
+            "query_terms": ["rdp"],
             "coverage_gaps": ["Network Traffic"],
             "matched_events": [{"event": {"event_id": "1"}, "matched_terms": ["rdp"], "score": 1}],
         }

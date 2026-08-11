@@ -20,10 +20,10 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.infrastructure.db.base import Base, TimestampMixin, UuidPrimaryKeyMixin
+from app.infrastructure.db.base import VECTOR_TYPE, Base, TimestampMixin, UuidPrimaryKeyMixin
 
 
-class Severity(str, enum.Enum):
+class Severity(enum.StrEnum):
     informational = "informational"
     low = "low"
     medium = "medium"
@@ -31,7 +31,7 @@ class Severity(str, enum.Enum):
     critical = "critical"
 
 
-class AlertStatus(str, enum.Enum):
+class AlertStatus(enum.StrEnum):
     new = "new"
     triaged = "triaged"
     investigating = "investigating"
@@ -39,7 +39,7 @@ class AlertStatus(str, enum.Enum):
     closed = "closed"
 
 
-class IncidentStatus(str, enum.Enum):
+class IncidentStatus(enum.StrEnum):
     open = "open"
     investigating = "investigating"
     contained = "contained"
@@ -47,7 +47,7 @@ class IncidentStatus(str, enum.Enum):
     closed = "closed"
 
 
-class AgentRunStatus(str, enum.Enum):
+class AgentRunStatus(enum.StrEnum):
     queued = "queued"
     running = "running"
     waiting_for_approval = "waiting_for_approval"
@@ -56,7 +56,7 @@ class AgentRunStatus(str, enum.Enum):
     cancelled = "cancelled"
 
 
-class ResponseActionStatus(str, enum.Enum):
+class ResponseActionStatus(enum.StrEnum):
     recommended = "recommended"
     awaiting_approval = "awaiting_approval"
     approved = "approved"
@@ -197,12 +197,34 @@ class NormalizedEvent(UuidPrimaryKeyMixin, TimestampMixin, Base):
 
     tenant_id: Mapped[UUID] = mapped_column(ForeignKey("tenants.id"), nullable=False)
     raw_event_id: Mapped[UUID] = mapped_column(ForeignKey("raw_events.id"), nullable=False)
+    data_source_id: Mapped[UUID | None] = mapped_column(ForeignKey("data_sources.id"))
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     event_type: Mapped[str] = mapped_column(String(120), nullable=False)
+    event_category: Mapped[str | None] = mapped_column(String(80))
+    event_class: Mapped[int | None] = mapped_column(Integer)
+    activity_id: Mapped[int | None] = mapped_column(Integer)
+    severity: Mapped[str | None] = mapped_column(String(32))
     actor: Mapped[str | None] = mapped_column(String(255))
     target: Mapped[str | None] = mapped_column(String(255))
+    username: Mapped[str | None] = mapped_column(String(255))
     source_ip: Mapped[str | None] = mapped_column(String(64))
+    source_port: Mapped[int | None] = mapped_column(Integer)
     destination_ip: Mapped[str | None] = mapped_column(String(64))
+    destination_port: Mapped[int | None] = mapped_column(Integer)
+    protocol: Mapped[str | None] = mapped_column(String(32))
+    hostname: Mapped[str | None] = mapped_column(String(255))
+    process_name: Mapped[str | None] = mapped_column(String(255))
+    command_line: Mapped[str | None] = mapped_column(String(4096))
+    file_hash_md5: Mapped[str | None] = mapped_column(String(32))
+    file_hash_sha1: Mapped[str | None] = mapped_column(String(40))
+    file_hash_sha256: Mapped[str | None] = mapped_column(String(64))
+    domain: Mapped[str | None] = mapped_column(String(255))
+    url: Mapped[str | None] = mapped_column(String(2048))
+    cloud_identity: Mapped[str | None] = mapped_column(String(255))
+    cloud_resource: Mapped[str | None] = mapped_column(String(255))
+    authentication_result: Mapped[str | None] = mapped_column(String(64))
+    correlation_key: Mapped[str | None] = mapped_column(String(255))
+    session_id: Mapped[str | None] = mapped_column(String(255))
     normalized: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
 
 
@@ -220,8 +242,42 @@ class Alert(UuidPrimaryKeyMixin, TimestampMixin, Base):
         nullable=False,
     )
     source: Mapped[str] = mapped_column(String(120), nullable=False)
+    detection_rule_id: Mapped[str | None] = mapped_column(String(255))
+    correlation_key: Mapped[str | None] = mapped_column(String(512))
+    source_ip: Mapped[str | None] = mapped_column(String(64))
+    destination_ip: Mapped[str | None] = mapped_column(String(64))
+    actor: Mapped[str | None] = mapped_column(String(255))
+    raw_event_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True))
+    normalized_event_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True))
+    incident_id: Mapped[UUID | None] = mapped_column(PgUUID(as_uuid=True))
+    confidence: Mapped[float | None] = mapped_column(Numeric(5, 4))
     risk_score: Mapped[int | None] = mapped_column(Integer)
+    risk_explanation: Mapped[str | None] = mapped_column(Text)
+    first_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    occurrence_count: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     mitre: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+
+
+class DetectionRule(UuidPrimaryKeyMixin, TimestampMixin, Base):
+    """Tenant-scoped Sigma-style detection rule stored as YAML."""
+
+    __tablename__ = "detection_rules"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "rule_id", name="uq_detection_rules_tenant_rule"),
+        Index("ix_detection_rules_tenant_id", "tenant_id"),
+    )
+    tenant_id: Mapped[UUID] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+    rule_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    rule_yaml: Mapped[str] = mapped_column(Text, nullable=False)
+    severity: Mapped[str] = mapped_column(String(32), default="medium", nullable=False)
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    mitre: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    compiled_query: Mapped[str | None] = mapped_column(Text)
+
+    tenant: Mapped[Tenant] = relationship()
 
 
 class Incident(UuidPrimaryKeyMixin, TimestampMixin, Base):
@@ -364,3 +420,63 @@ class AuditLog(UuidPrimaryKeyMixin, Base):
         nullable=False,
     )
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, default=dict, nullable=False)
+
+
+class SkillRiskClass(enum.StrEnum):
+    informational = "informational"
+    low = "low"
+    elevated = "elevated"
+    critical = "critical"
+
+
+class SkillExecutionPolicy(enum.StrEnum):
+    allow = "allow"
+    require_approval = "require_approval"
+    deny = "deny"
+
+
+class AgentSkill(UuidPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "agent_skills"
+    __table_args__ = (Index("ix_agent_skills_tenant", "tenant_id"),)
+
+    tenant_id: Mapped[UUID] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(160), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    risk_class: Mapped[SkillRiskClass] = mapped_column(Enum(SkillRiskClass), nullable=False)
+    execution_policy: Mapped[SkillExecutionPolicy] = mapped_column(
+        Enum(SkillExecutionPolicy),
+        default=SkillExecutionPolicy.allow,
+        nullable=False,
+    )
+    required_permission: Mapped[str] = mapped_column(String(160), nullable=False)
+    parameters_schema: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class KnowledgeDocument(UuidPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "knowledge_documents"
+    __table_args__ = (Index("ix_knowledge_documents_tenant", "tenant_id"),)
+
+    tenant_id: Mapped[UUID] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+    title: Mapped[str] = mapped_column(String(512), nullable=False)
+    category: Mapped[str] = mapped_column(String(120), nullable=False, default="playbook")
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    tags: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    indexed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
+class AgentMemory(UuidPrimaryKeyMixin, TimestampMixin, Base):
+    """Episodic agent memory with a pgvector embedding for semantic recall."""
+
+    __tablename__ = "agent_memories"
+    __table_args__ = (
+        Index("ix_agent_memories_tenant", "tenant_id"),
+        Index("ix_agent_memories_tenant_kind", "tenant_id", "kind"),
+    )
+
+    tenant_id: Mapped[UUID] = mapped_column(ForeignKey("tenants.id"), nullable=False)
+    kind: Mapped[str] = mapped_column(String(60), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    narrative: Mapped[str] = mapped_column(Text, nullable=False)
+    related_ids: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    vector: Mapped[list[float] | None] = mapped_column(VECTOR_TYPE, nullable=True)

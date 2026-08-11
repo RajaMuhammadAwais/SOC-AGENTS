@@ -5,6 +5,13 @@ from sqlalchemy import DateTime
 from sqlalchemy.dialects.postgresql import UUID as PgUUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+try:
+    from pgvector.sqlalchemy import Vector
+
+    VECTOR_TYPE = Vector(1024)  # bge-m3 dense embedding dimension
+except ImportError:  # pragma: no cover - pgvector optional at schema import
+    VECTOR_TYPE = None  # type: ignore[assignment]
+
 
 class Base(DeclarativeBase):
     pass

@@ -41,7 +41,7 @@ def chunk_document(document: Document, *, max_chars: int = 1800, overlap_chars: 
     while start < len(text):
         end = min(start + max_chars, len(text))
         chunk_text = text[start:end].strip()
-        digest = sha256(f"{document.source_id}:{start}:{chunk_text}".encode("utf-8")).hexdigest()
+        digest = sha256(f"{document.source_id}:{start}:{chunk_text}".encode()).hexdigest()
         chunks.append(
             Chunk(
                 chunk_id=digest[:32],

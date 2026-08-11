@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 
-class RetrievalMode(str, Enum):
+class RetrievalMode(StrEnum):
     semantic = "semantic"
     lexical = "lexical"
     hybrid = "hybrid"

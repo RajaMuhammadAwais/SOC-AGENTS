@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     )
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
 
+    cors_allowed_origins: list[str] = Field(
+        default=["http://localhost:3000", "http://localhost:3100", "http://localhost:8000"],
+        alias="CORS_ALLOWED_ORIGINS",
+    )
+    cors_allow_credentials: bool = Field(default=True, alias="CORS_ALLOW_CREDENTIALS")
+
     jwt_issuer: str = Field(default="enterprise-ai-soc", alias="JWT_ISSUER")
     jwt_audience: str = Field(default="enterprise-ai-soc-api", alias="JWT_AUDIENCE")
     jwt_secret_key: str = Field(default="change-me-local-only", alias="JWT_SECRET_KEY")
@@ -79,6 +85,13 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = Field(default=True, alias="RATE_LIMIT_ENABLED")
     rate_limit_requests: int = Field(default=120, alias="RATE_LIMIT_REQUESTS")
     rate_limit_window_seconds: int = Field(default=60, alias="RATE_LIMIT_WINDOW_SECONDS")
+
+    @field_validator("cors_allowed_origins", mode="before")
+    @classmethod
+    def validate_cors_origins(cls, value: object) -> list[str]:
+        if isinstance(value, str):
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return list(value or [])
 
     @field_validator("app_env")
     @classmethod

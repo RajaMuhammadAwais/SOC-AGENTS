@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar
+from typing import TypeVar
 from uuid import UUID
 
 from sqlalchemy import Select, select
@@ -9,7 +9,7 @@ from app.infrastructure.db.base import Base
 ModelT = TypeVar("ModelT", bound=Base)
 
 
-class TenantScopedRepository(Generic[ModelT]):
+class TenantScopedRepository[ModelT: Base]:
     model: type[ModelT]
 
     def __init__(self, session: AsyncSession, tenant_id: UUID) -> None:

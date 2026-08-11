@@ -5,7 +5,8 @@ from base64 import b32decode, b32encode
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from jose import jwt
+from joserfc import jwt as joserfc_jwt
+from joserfc.jwk import OctKey
 from passlib.context import CryptContext
 
 from app.core.config import Settings
@@ -42,17 +43,35 @@ def create_access_token(
     }
     if extra_claims:
         payload.update(extra_claims)
-    return jwt.encode(payload, settings.jwt_secret_key, algorithm="HS256")
+    header = {"alg": "HS256", "typ": "JWT"}
+    token = joserfc_jwt.encode(header, payload, OctKey.import_key(settings.jwt_secret_key))
+    return token
 
 
 def decode_access_token(token: str, settings: Settings) -> dict[str, Any]:
-    return jwt.decode(
+    claims = joserfc_jwt.decode(
         token,
-        settings.jwt_secret_key,
+        OctKey.import_key(settings.jwt_secret_key),
         algorithms=["HS256"],
-        audience=settings.jwt_audience,
-        issuer=settings.jwt_issuer,
     )
+    payload = dict(claims.claims)
+    _validate_claims(payload, settings)
+    return payload
+
+
+def _validate_claims(payload: dict[str, Any], settings: Settings) -> None:
+    """Validate standard JWT claims (signature was already verified by joserfc)."""
+    now = datetime.now(UTC).timestamp()
+    exp = payload.get("exp")
+    iat = payload.get("iat")
+    if isinstance(exp, (int, float)) and now > exp:
+        raise ValueError("token has expired")
+    if isinstance(iat, (int, float)) and iat > now + 300:
+        raise ValueError("token issued in the future")
+    if settings.jwt_issuer and payload.get("iss") != settings.jwt_issuer:
+        raise ValueError("unexpected token issuer")
+    if settings.jwt_audience and payload.get("aud") != settings.jwt_audience:
+        raise ValueError("unexpected token audience")
 
 
 def generate_refresh_token() -> str:
